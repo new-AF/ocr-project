@@ -5,9 +5,16 @@ from PIL import ImageTk,Image
 
 top = t.Tk()
 top.title("ocr toolbox")
-
+def make_frame(parent,label,font_size_increment = 0):
+    fs = 10
+    fs += font_size_increment
+    l = t.Label(text = label, font = 'tahoma %d bold'%fs)
+    f = t.LabelFrame(parent,bd=7, relief = 'flat',highlightthickness=7)
+    f.XLabel = l
+    f.config (labelwidget = l)
+    return f
 def get_dir():
-    f = tkFileDialog.askdirectory(title = 'Choose the Path or Folder where Images Reside')
+    f = tkFileDialog.askdirectory(title = 'Choose the Path or Folder where Images reside')
     print (f)
 
 def get_image_names(x):
@@ -65,6 +72,9 @@ def list_hover(e):
 def list_leave(e):
     w=e.widget
     w.itemconfig(w.Xhover_i,background = 'white')
+
+
+
 ##U+2589
 
 #detour = lambda i: visible(top)
@@ -73,23 +83,41 @@ def list_leave(e):
 #top.tk_bisque()
 image = tk_image('test1.jpg')
 
+ImageFrame = make_frame(top,'Image')
+
+
 c = t.Canvas(top,) # cursor = 'hand2'
-l = t.Label(top,image = image)
-#c.create_image(0,0,image=image)
+l = t.Label(ImageFrame,image = image)
 
+ImageFrame.grid(row=0,column=1, padx = 10)
 l.grid(row=0,column=1)
-c.grid(row=0,column=2)
+#c.grid(row=0,column=2)
 
-frame1 = t.Frame(top,relief='groove')       ; frame1.grid(row=0,column=0)
-frame2 = t.Frame(frame1)                    ; frame2.pack(side = t.TOP)
+
+CurrentFrame = make_frame(top,'Images in Current Path',-2)
+CurrentFrame.grid(row = 0, column = 2,  padx = 10)
+
+ScrollFrame = t.Frame(CurrentFrame,relief='groove')
+
+
+
+scroll1 = t.Scrollbar(ScrollFrame,orient=t.VERTICAL)
+scroll2 = t.Scrollbar(ScrollFrame,orient=t.HORIZONTAL)
+scroll1.pack(side= t.RIGHT, fill = t.Y)
+scroll2.pack(side= t.BOTTOM, fill = t.X)
 
 #
 # icon from Gemicon Icon Set (600+ free icons) (http://gemicon.net)
 #
-l1 = t.Label(frame2,text='Files in Current Directory')       ; l1.pack(side = t.LEFT) ; png = tk_image('folder3.png',20,20) ;
-list1 = t.Listbox(frame1,exportselection=0, selectmode = t.SINGLE, relief = 'groove',activestyle='none',selectbackground = 'steelblue2',selectforeground='black', cursor = 'hand2' )     ;  list1.pack(side = t.BOTTOM, fill= t.X)
-b1 = t.Button(frame2,image =  png, relief = 'groove', command = get_dir)     ; b1.pack(side=t.RIGHT) ; b1.config(padx = 11)
-
+#l1 = t.Label(frame2,text='Files in Current Directory')       ; l1.pack(side = t.LEFT)
+png = tk_image('folder3.png',20,20) ;
+list1 = t.Listbox(ScrollFrame, yscrollcommand = scroll1.set,xscrollcommand = scroll2.set, exportselection=0, selectmode = t.SINGLE, relief = 'groove',activestyle='none',selectbackground = 'steelblue2',selectforeground='black', cursor = 'hand2' )
+list1.pack(side = t.LEFT, fill= t.BOTH)
+b1 = t.Button(CurrentFrame,image =  png, relief = 'groove', command = get_dir)
+b1.pack(side=t.TOP,anchor= t.E, pady = 5)
+ScrollFrame.pack(side = t.BOTTOM)
+scroll1.config(command = list1.yview)
+scroll2.config(command = list1.xview)
 list1.focus()
 list1.Xpath = os.getcwd()
 populate_list()
