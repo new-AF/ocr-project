@@ -14,7 +14,7 @@ def make_frame(parent,label,font_size_increment = 0):
     fs = 10
     fs += font_size_increment
     l = t.Label(text = label, font = 'tahoma %d bold'%fs, cursor = 'fleur')
-    f = t.LabelFrame(parent,bd=7, relief = 'ridge',highlightthickness=7)
+    f = t.LabelFrame(parent,bd=7, relief = 'groove',highlightthickness=7)
     f.XLabel = l
     f.XLabel.bind('<B1-Motion>',move_)
     f.config (labelwidget = l)
@@ -85,6 +85,8 @@ def list_leave(e):
     w=e.widget
     w.itemconfig(w.Xhover_i,background = 'white')
 
+def Box(parent,*i):
+    t.Frame(parent)
 
 ##U+2589
 
@@ -100,14 +102,15 @@ def Appear(x,manager,**kw):
 #top.tk_bisque()
 
 ## Variables
+Container1 = t.Frame(top)
 image = tk_image('test1.jpg')
-ImageFrame = make_frame(top,'Image')
+ImageFrame = make_frame(Container1,'Image')
 ImageText = t.Text(ImageFrame)
 CurrentFrame = make_frame(top,'Images in Current Path',-2)
 ScrollFrame = t.Frame(CurrentFrame,relief='groove')
 VirtualImage = ImageText.image_create(t.END, image=image)
-Canvas = t.Canvas(top)
-ImshowFrame = make_frame(top,'\'imshow\'')
+Canvas = t.Canvas(top,highlightthickness=7)
+ImshowFrame = make_frame(Container1,'"imshow"')
 ImshowText = t.Text(ImshowFrame)
 
 
@@ -115,23 +118,43 @@ ImshowText = t.Text(ImshowFrame)
 ImageTextScroll1 = t.Scrollbar(ImageFrame)
 ImageTextScroll2 = t.Scrollbar(ImageFrame,orient=t.HORIZONTAL)
 
-for i in range(5):
-    Button = t.Button(text = '%d'%i)
-    Canvas.create_window(0,i*50,window = Button)
+class gridder:
+    def __init__(self,dx,dy,offset = 50):
+        self.inc = offset
+        self.dx=dx
+        self.dy=dy
+    def getx(self,x):
+        return self.dx*x+self.inc
+    def gety(self,y):
+        return self.dy*y
 
+class im:
+    def __init__(self,canvas,text, x=0,y=0):
+        self.c = canvas
+        self.x = self.c.Gridder.getx(x)
+        self.y = self.c.Gridder.gety(y)
+        self.button(text)
+    def button(self,text):
+        self.b = t.Button(font = 'tahoma 10',text=text)
+        self.c.create_window(self.x,self.y,window = self.b)
+
+Canvas.Gridder = gridder(dx = 100,dy=100)
+im(Canvas,'imread',y=1)
+im(Canvas,'im2bw',y=2)
+im(Canvas,'channel extraction',x=1,y=2)
 
 # Configs1
-CurrentFrame.place(relx=.05,rely=0.05)
-ImageFrame.place(relx=.05,rely=0.4,relwidth = .5, relheight = .5)
-#ImageFrame.grid(row=0,column=1, sticky='we')
-#ImageFrame.config(width=500,height=400)
+CurrentFrame.pack(side=t.LEFT,fill=t.X)
+Container1.pack(side=t.LEFT,fill='both',expand=1)
 ImageText.place(x=0,y=0, relwidth=.95,relheight=.95)
+
 ImageText.config(yscrollcommand = ImageTextScroll1.set,xscrollcommand = ImageTextScroll2.set)
 ImageText['bg']=top['bg']
-#ImageFrame['']
-Canvas.place(relx=.5,rely=0.05,relwidth = .5, relheight = .5)
+ImageFrame.place(x=0,y=0,relheight=0.5,relwidth=1)
+
+Canvas.pack(side=t.LEFT,fill='both',expand=1)
 ImshowText.pack()
-ImshowFrame.place(relx=0.6,rely = 0.5, relwidth = 04)
+ImshowFrame.place(x=0,rely=0.5,relheight=0.5,relwidth=1)
 
 ## Configs2
 ImageTextScroll1.config(command= ImageText.yview)
@@ -161,7 +184,7 @@ b1.pack(side=t.TOP,anchor= t.E, pady = 5)
 ScrollFrame.pack(side = t.BOTTOM)
 list_scroll1.config(command = list1.yview)
 list_scroll2.config(command = list1.xview)
-list1.focus()
+Canvas.focus()
 populate_list()
 list1.bind('<<ListboxSelect>>',list_select)
 list1.bind('<Motion>',list_hover)
