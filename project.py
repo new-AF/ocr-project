@@ -2,15 +2,21 @@ import os
 import Tkinter as t
 import tkFileDialog
 from PIL import ImageTk,Image
+import cv2 as cv
 
 top = t.Tk()
 top.title("ocr toolbox")
+def move_(e):
+    w = e.widget
+    ImageFrame.place(x=e.x,y=e.y)
+
 def make_frame(parent,label,font_size_increment = 0):
     fs = 10
     fs += font_size_increment
-    l = t.Label(text = label, font = 'tahoma %d bold'%fs)
-    f = t.LabelFrame(parent,bd=7, relief = 'flat',highlightthickness=7)
+    l = t.Label(text = label, font = 'tahoma %d bold'%fs, cursor = 'fleur')
+    f = t.LabelFrame(parent,bd=7, relief = 'ridge',highlightthickness=7)
     f.XLabel = l
+    f.XLabel.bind('<B1-Motion>',move_)
     f.config (labelwidget = l)
     return f
 def get_dir():
@@ -87,6 +93,7 @@ def Appear(x,manager,**kw):
 
     fun(x,**kw)
 
+
 #detour = lambda i: visible(top)
 #top.bind('<Visibility>',detour)
 
@@ -99,20 +106,32 @@ ImageText = t.Text(ImageFrame)
 CurrentFrame = make_frame(top,'Images in Current Path',-2)
 ScrollFrame = t.Frame(CurrentFrame,relief='groove')
 VirtualImage = ImageText.image_create(t.END, image=image)
+Canvas = t.Canvas(top)
+ImshowFrame = make_frame(top,'\'imshow\'')
+ImshowText = t.Text(ImshowFrame)
+
+
 
 ImageTextScroll1 = t.Scrollbar(ImageFrame)
 ImageTextScroll2 = t.Scrollbar(ImageFrame,orient=t.HORIZONTAL)
 
+for i in range(5):
+    Button = t.Button(text = '%d'%i)
+    Canvas.create_window(0,i*50,window = Button)
+
+
 # Configs1
 CurrentFrame.place(relx=.05,rely=0.05)
-ImageFrame.place(relx=.3,rely=0.05,relwidth = .6, relheight = .5)
+ImageFrame.place(relx=.05,rely=0.4,relwidth = .5, relheight = .5)
 #ImageFrame.grid(row=0,column=1, sticky='we')
 #ImageFrame.config(width=500,height=400)
 ImageText.place(x=0,y=0, relwidth=.95,relheight=.95)
 ImageText.config(yscrollcommand = ImageTextScroll1.set,xscrollcommand = ImageTextScroll2.set)
 ImageText['bg']=top['bg']
 #ImageFrame['']
-
+Canvas.place(relx=.5,rely=0.05,relwidth = .5, relheight = .5)
+ImshowText.pack()
+ImshowFrame.place(relx=0.6,rely = 0.5, relwidth = 04)
 
 ## Configs2
 ImageTextScroll1.config(command= ImageText.yview)
@@ -147,5 +166,6 @@ populate_list()
 list1.bind('<<ListboxSelect>>',list_select)
 list1.bind('<Motion>',list_hover)
 list1.bind('<Leave>',list_leave)
+#print top.place_slaves()
 top.geometry('800x800+{}+{}'.format(1920/2,1080/2))
 top.mainloop()
