@@ -3,6 +3,7 @@ import Tkinter as t
 import ttk
 import tkFileDialog
 from PIL import ImageTk,Image
+import numpy as np
 import cv2
 
 top = t.Tk()
@@ -11,16 +12,34 @@ top.title("ocr toolbox")
 
 
 def _imread(e):
-    Itext.I = cv2.imread(Itext.Ipath,cv2.IMREAD_UNCHANGED)
-    Itext.M = Itext.I
-    #print Itext.I
-    display()
+    x = Itext.I = cv2.imread(Itext.Ipath,cv2.IMREAD_UNCHANGED)
+    mod(0,x)
+    display(0)
 
 def _Channel_Extraction(e):
     pass
 
 def _Noise_Removal(e):
     pass
+
+def _Canny_Edge_Detection(e):
+    x = get(2)
+    y = cv2.Canny(x,50,100)
+    #y = cv2.Laplacian(x,cv2.CV_8U)
+    #ret, y2 = cv2.threshold(img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    mod(3, y )
+    display(3)
+def _X1(e):
+    x = get(3)
+    se = np.ones((2,2),np.uint8)
+    seflood = np.zeroes((0,0),np.uint8)
+    se = np.array([[0,1,0],
+                [1,1,1],
+                [0,1,0]], dtype=np.uint8)
+    y = cv2.morphologyEx(x, cv2.MORPH_CLOSE, se)
+    #y = cv2.floodFill(x,seflood,(0,0),255)
+    mod(4, y)
+    display(4)
 def move_(e):
     w = e.widget
     ImageFrame.place(x=e.x,y=e.y)
@@ -75,9 +94,8 @@ def list_select(e):
     path = os.path.join(list1.Xpath,text)
 
     Itext.Ipath = path
-    Itext.I = cv2.imread(path)
-    Itext.M = Itext.I
-    display()
+    Itext.a[0] = cv2.imread(path)
+    display(0)
 
     #print (path)
     image = tk_image(path)
@@ -196,9 +214,10 @@ class Pane:
         self.disable.grid(row = 0,column=1,sticky = 'E')
         self.tab.add(self.f,text=name)
         self.f.bind('<Visibility>',globals()['_'+name])
+        self.reload.bind('<ButtonRelease>',globals()['_'+name])
         #self.tab.add(self.code,text='Code')
 
-Dict = ['imread','Noise_Removal','Channel_Extraction']
+Dict = ['imread','Noise_Removal','Channel_Extraction','Canny_Edge_Detection','X1']
 DictValues=[]
 
 
@@ -230,8 +249,10 @@ def mod(pos,x=None,disabled = 0):
         Itext.a[pos] = Itext.b[pos]
     if x is not None:
         Itext.a[pos] = x
+    #for i in range(pos):
+    #    display(i)
 
-def display(pos = 0):
+def display(pos = -1):
     try:
         Itext.Im = ImageTk.PhotoImage(Image.fromarray(Itext.a[pos]))
         Itext.delete(Itext.Itag)
