@@ -1,11 +1,26 @@
 import os
 import Tkinter as t
+import ttk
 import tkFileDialog
 from PIL import ImageTk,Image
-import cv2 as cv
+import cv2
 
 top = t.Tk()
 top.title("ocr toolbox")
+
+
+
+def _imread(e):
+    Itext.I = cv2.imread(Itext.Ipath,cv2.IMREAD_UNCHANGED)
+    Itext.M = Itext.I
+    #print Itext.I
+    display()
+
+def _Channel_Extraction(e):
+    pass
+
+def _Noise_Removal(e):
+    pass
 def move_(e):
     w = e.widget
     ImageFrame.place(x=e.x,y=e.y)
@@ -51,13 +66,19 @@ def tk_image(fname,*rest ):
     return i
 
 def list_select(e):
-    global image,VirtualImage
+    global image,VirtualImage,Ipath
     w = e.widget
     #print dir(e)
     i = w.curselection()[0]
 
     text = w.get(i) #; print (text)
     path = os.path.join(list1.Xpath,text)
+
+    Itext.Ipath = path
+    Itext.I = cv2.imread(path)
+    Itext.M = Itext.I
+    display()
+
     #print (path)
     image = tk_image(path)
     ImageText.delete(VirtualImage)
@@ -95,6 +116,9 @@ def Appear(x,manager,**kw):
 
     fun(x,**kw)
 
+def switch_page(e):
+    pass
+    # to be implemented later
 
 #detour = lambda i: visible(top)
 #top.bind('<Visibility>',detour)
@@ -103,20 +127,25 @@ def Appear(x,manager,**kw):
 
 ## Variables
 Container1 = t.Frame(top)
+Container2 = t.Frame(top)
 image = tk_image('test1.jpg')
 ImageFrame = make_frame(Container1,'Image')
 ImageText = t.Text(ImageFrame)
 CurrentFrame = make_frame(top,'Images in Current Path',-2)
 ScrollFrame = t.Frame(CurrentFrame,relief='groove')
 VirtualImage = ImageText.image_create(t.END, image=image)
+
 Canvas = t.Canvas(top,highlightthickness=7)
-ImshowFrame = make_frame(Container1,'"imshow"')
-ImshowText = t.Text(ImshowFrame)
+ImshowFrame = make_frame(Container1,'Pipeline')
+ImshowFrame.tab = ttk.Notebook(ImshowFrame)
+ImshowText = t.Text(ImshowFrame.tab)
 
 
 
 ImageTextScroll1 = t.Scrollbar(ImageFrame)
 ImageTextScroll2 = t.Scrollbar(ImageFrame,orient=t.HORIZONTAL)
+
+
 
 class gridder:
     def __init__(self,dx,dy,offset = 50):
@@ -138,28 +167,153 @@ class im:
         self.b = t.Button(font = 'tahoma 10',text=text)
         self.c.create_window(self.x,self.y,window = self.b)
 
-Canvas.Gridder = gridder(dx = 100,dy=100)
-im(Canvas,'imread',y=1)
-im(Canvas,'im2bw',y=2)
-im(Canvas,'channel extraction',x=1,y=2)
+class Reel:
+    def __init__(self,parent,image,length = 1):
+        self.image = image
+        self.f = t.Frame(parent)
+        self.buttons = []
+        for i in xrange(length):
+            b = t.Label(self.f,relief='groove',image =self.image )
+            b.XPageIndex = i
+            self.buttons += [b]
+            b.grid(row=0,column=i,sticky='WE')
+            b.bind('<Motion>',switch_page)
+
+image2 = tk_image('3.png',11,11)
+Container2.XIndex = []
+class Pane:
+    def __init__(self,parent,name):
+        self.tab = ttk.Notebook(parent)
+        #self.code = t.Frame(self.tab)
+        self.f = t.Frame(parent)
+        self.disable = ttk.Button(self.f,text= 'Disable')
+        self.reload = ttk.Button(self.f,text= 'Reload')
+        #self.l = t.Label(self.f,text = name, font = 'tahoma 11')
+        #self.l.grid(row = 0,column =0 , sticky='W')
+        parent.XIndex += [self.f]
+        self.tab.pack(side='top',fill='both',expand = 1)
+        self.reload.grid(row = 0,column=0,sticky = 'E')
+        self.disable.grid(row = 0,column=1,sticky = 'E')
+        self.tab.add(self.f,text=name)
+        self.f.bind('<Visibility>',globals()['_'+name])
+        #self.tab.add(self.code,text='Code')
+
+Dict = ['imread','Noise_Removal','Channel_Extraction']
+DictValues=[]
+
+
+
+Itext = t.Text(ImshowFrame.tab)
+ImshowFrame.tab.add(Itext,text='Processed Image')
+Itext.a = []
+Itext.b = []
+
+Itext.Ipath = os.getcwd()+os.sep+'test1.jpg'
+Itext.I = cv2.imread(Itext.Ipath)
+Itext.M = Itext.I
+#print '->>>',Itext.I
+
+for i in Dict:
+    j=Pane(Container2,i)
+    DictValues += [j]
+    Itext.a += [Itext.I]
+    Itext.b += [Itext.I]
+
+def get(pos):
+    return Itext.a[pos]
+
+def getb(pos):
+    return Itext.b[pos]
+
+def mod(pos,x=None,disabled = 0):
+    if disabled:
+        Itext.a[pos] = Itext.b[pos]
+    if x is not None:
+        Itext.a[pos] = x
+
+def display(pos = 0):
+    try:
+        Itext.Im = ImageTk.PhotoImage(Image.fromarray(Itext.a[pos]))
+        Itext.delete(Itext.Itag)
+    except:
+        pass
+    #print Itext.I
+    Itext.Itag = Itext.image_create(t.END,image = Itext.Im)
+
+def scale1_fun(v):
+    v = int(v)
+    L ={0:'Blue',1:'Green',2:'Red'}
+    label1['text']= L[v]
+    prev = get(1)
+    mod(2,prev[:,:,v])
+    display(2)
+
+
+def spin_fun(v = False, v3=1,v2 = [1]):
+    if v is False:
+        v = int(radio1_var.get())
+
+    if v3%2==0:
+        v3+=1
+
+    v2[0] = v3
+    #print '->>>',v,v2
+
+    l1 = lambda x,s : cv2.blur(x,(s,s))
+    l2 = lambda x,s : cv2.GaussianBlur(x,(s,s),0)
+    l3 = lambda x,s : cv2.medianBlur(x,s)
+    x = [l1,l2,l3][v]
+    x = x(get(0),v2[0])
+    #print x
+    mod(1,x)
+    display(1)
+
+def spin_fun2(v):
+    spin_fun(radio1_var.get(),int(v))
+
+label1 = t.Label(DictValues[2].f,text=0)
+scale1 = t.Scale(DictValues[2].f, from_ = 0, to=2,command=scale1_fun, orient=t.HORIZONTAL,showvalue=0)
+label1.grid(row=1,column=0,columnspan = 2)
+scale1.grid(row=2,column=0,columnspan = 2)
+
+radio1_var = t.IntVar()
+radio11 = t.Radiobutton(DictValues[1].f,text = 'Average',variable=radio1_var,value=0,command = spin_fun)
+radio12 = t.Radiobutton(DictValues[1].f,text = 'Gaussian',variable=radio1_var,value=1,command = spin_fun)
+radio13 = t.Radiobutton(DictValues[1].f,text = 'Median',variable=radio1_var,value=2,command = spin_fun)
+spin11 = t.Scale(DictValues[1].f,from_=1,to = 10,font = 'tahoma 9',orient=t.HORIZONTAL,command = spin_fun2)
+spin12 = t.Scale(DictValues[1].f,from_=1,to = 10,font = 'tahoma 9',orient=t.HORIZONTAL,command = spin_fun2)
+spin13 = t.Scale(DictValues[1].f,from_=1,to = 10,font = 'tahoma 9',orient=t.HORIZONTAL,command = spin_fun2)
+radio11.grid(row=1,column=0,columnspan = 1,sticky=t.W)
+radio12.grid(row=2,column=0,columnspan = 1,sticky=t.W)
+radio13.grid(row=3,column=0,columnspan = 1,sticky=t.W)
+spin11.grid(row=1,column=1,columnspan = 1,sticky=t.W)
+spin12.grid(row=2,column=1,columnspan = 1,sticky=t.W)
+spin13.grid(row=3,column=1,columnspan = 1,sticky=t.W)
+#print Container2.XIndex
+
+#Canvas.Gridder = gridder(dx = 100,dy=100)
+#im(Canvas,'imread',y=1)
+#im(Canvas,'im2bw',y=2)
+#im(Canvas,'channel extraction',x=1,y=2)
 
 # Configs1
-CurrentFrame.pack(side=t.LEFT,fill=t.X)
-Container1.pack(side=t.LEFT,fill='both',expand=1)
-ImageText.place(x=0,y=0, relwidth=.95,relheight=.95)
 
+Container2.pack(side=t.LEFT,fill='both',expand=1)
+Container1.pack(side=t.LEFT,fill='both',expand=1)
+ImageText.place(x=0,y=0, relwidth=.90,relheight=.95)
+CurrentFrame.pack(side=t.LEFT,fill=t.X)
 ImageText.config(yscrollcommand = ImageTextScroll1.set,xscrollcommand = ImageTextScroll2.set)
 ImageText['bg']=top['bg']
 ImageFrame.place(x=0,y=0,relheight=0.5,relwidth=1)
 
-Canvas.pack(side=t.LEFT,fill='both',expand=1)
-ImshowText.pack()
+#Canvas.pack(side=t.LEFT,fill='both',expand=1)
+ImshowFrame.tab.place(x=0,y=0, relwidth=.95,relheight=.95)
 ImshowFrame.place(x=0,rely=0.5,relheight=0.5,relwidth=1)
 
 ## Configs2
 ImageTextScroll1.config(command= ImageText.yview)
 ImageTextScroll2.config(command= ImageText.xview)
-ImageTextScroll1.place(relx=.95,y=0,relheight = .95)
+ImageTextScroll1.place(relx=.91,y=0,relheight = .95)
 ImageTextScroll2.place(x=0,rely=0.95,relwidth=.95)
 
 ## Old Variables
@@ -176,8 +330,6 @@ list_scroll2.pack(side= t.BOTTOM, fill = t.X)
 png = tk_image('folder3.png',20,20) ;
 list1 = t.Listbox(ScrollFrame, yscrollcommand = list_scroll1.set,xscrollcommand = list_scroll2.set, exportselection=0, selectmode = t.SINGLE, relief = 'groove',activestyle='none',selectbackground = 'steelblue2',selectforeground='black', cursor = 'hand2' )
 list1.pack(side = t.LEFT, fill= t.BOTH)
-
-
 
 b1 = t.Button(CurrentFrame,image =  png, relief = 'groove', command = get_dir)
 b1.pack(side=t.TOP,anchor= t.E, pady = 5)
