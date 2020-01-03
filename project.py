@@ -298,7 +298,7 @@ class Control:
         bind = kw.pop('bind',None)
         bind2 = kw.pop('bind2',None) # bind already existing items
 
-        self.all[index].extend(item)
+        self.all[index:index+1] = item
 
         if item and bind:
             self.bind(bind[0],bind[1],  xrange(len(self.all[j])) )
@@ -330,15 +330,15 @@ end'''.format(s)
 
 class FunctionPane(t.Frame):
 
-    def __init__(self,**kw):
+    def __init__(self,parent,**kw):
 
-        self._parent = kw.pop('parent')
+        #self.Parent = kw.pop('parent')
 
-        self._Name = kw.pop('name','Generic Tab')
+        self.name = kw.pop('name','Generic Tab')
 
-        self._tab= ttk.Notebook(self._parent,**kw)
+        self.tab= ttk.Notebook(parent,**kw)
 
-        t.Frame.__init__(self,self._tab)
+        t.Frame.__init__(self,self.tab)
 
         #self['master'] = self.tab
 
@@ -346,29 +346,30 @@ class FunctionPane(t.Frame):
 
         #self.frame = t.Frame(self)
 
-        self._disable = Checkbutton(self,text='Enabled')
+        self.disable = Checkbutton(self,text='Enabled')
 
-        self._reload = ttk.Button(self,text= 'Reset')
+        self.reload = ttk.Button(self,text= 'Reset')
 
-        self.control = Control(self._disable,self._reload)
+        self.control = Control(self.disable,self.reload)
 
         self.position()
 
-    def put(y,x, index,*item):
+    def put(self,y,x, index,*item):
 
-        self._control.add_to_group(index,item, bind = None)
+        self.control.add_to_group(index,item, bind = None)
 
-        self.grid(row = y, column = x )
+        for j in item:
+            j.grid(row = y, column = x,sticky = t.W )
 
     def position(self):
 
-        self._tab.pack(side='left',fill='both',expand = 1)
+        self.tab.pack(side='left',fill='both',expand = 1)
 
-        self._tab.add(self,text = self._Name)
+        self.tab.add(self,text = self.name)
 
-        self._reload.grid(row = 0,column=0,sticky = t.E)
+        self.reload.grid(row = 0,column=0,sticky = t.E)
 
-        self._disable.grid(row = 0,column=1,sticky = t.E)
+        self.disable.grid(row = 0,column=1,sticky = t.E)
 
 
         #self.f.bind('<Visibility>',globals()['_'+name])
@@ -503,7 +504,8 @@ spin13.grid(row=3,column=1,columnspan = 1,sticky=t.W)
 ## --
 
 tes = FunctionPane(parent = top)
-#tes.put(1,0,t.Button(text = 'Hi'))
+
+tes.put(1,0,1,t.Button(tes,text = 'Hi'))
 #tes2 = FunctionPane(parent = top)
 #tes = t.Frame()
 
