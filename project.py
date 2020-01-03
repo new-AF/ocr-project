@@ -290,6 +290,7 @@ class Checkbutton(t.Button):
         self.Xstate = False
 
 class Control:
+
     def __init__(self,*i):
         self.all = [list(i)]
 
@@ -311,6 +312,37 @@ class Control:
                 self.all[j].bind(event_type,function)
             elif rtype == str:
                 vars(self)[j].bind(event_type,function)
+
+    def __getitem__(self,y):
+
+        if type(y) != tuple:
+            y = (y,)
+
+        if type(y[0]) == int:
+
+            a = []
+
+            if len(y) == 2:
+
+                return self.all[y[0]][y[1]]
+
+            else:
+                for j in y:
+                    if j is None:
+                        continue
+
+                    a += self.all[j]
+
+            return a
+
+        elif type(y[0]) == str:
+            a = []
+            v= vars(self)
+
+            for j in y:
+                a+= [v[j]]
+
+            return a
 ##        if type(i[0]) == int:
 ##            target = map(lambda x: self.all[x], i)
 ##        else:
@@ -504,6 +536,7 @@ spin13.grid(row=3,column=1,columnspan = 1,sticky=t.W)
 #im(Canvas,'channel extraction',x=1,y=2)
 
 # Configs1
+
 ## --
 
 tes = FunctionPane(parent = top)
