@@ -9,10 +9,63 @@ import cv2
 top = t.Tk()
 top.title("ocr toolbox")
 
+def imread(x, mode=cv2.IMREAD_UNCHANGED):
+    """
+    Like cv2.imread(...) but returns RGB numpy.ndarray instead of BGR
+
+    x: (str) path to image
+    mode: (int) modes to be passed to cv2.imread(s,...) 'consts' from cv2.xxx
+
+    returns: result of cv2.imread(x,mode)
+    """
+    i = cv2.imread(x,mode)
+
+    try:
+        i = cv2.cvtColor(i,cv2.COLOR_BGR2RGB)
+    except Exception as e:
+        print ('[def imread] ({})'.format(e))
+
+    return i
+
+class S:
+    def __init__(self,target):
+        self.target = target
+        self.scroll1 = t.Scrollbar(target)
+        self.scroll2 = t.Scrollbar(target)
+
+        self.config_self()
+        self.config_target()
+
+    def _position(self,_fun,**kw):
+        _fun(self.scroll1,**kw)
+
+    def pack(self,**kw):
+        self._position(self.target.pack,**kw)
+        if kw.pop('scroll2',False):
+            return self.scroll2
+
+    def place(self,**kw):
+        self._position(self.target.place,**kw)
+        if kw.pop('scroll2',False):
+            return self.scroll2
+
+    def grid(self,**kw):
+        self._position(self.target.grid,**kw)
+        if kw.pop('scroll2',False):
+            return self.scroll2
+
+    def config_self(self):
+        self.scroll1.config(command= self.target.yview)
+        self.scroll2.config(command= self.target.xview)
+
+    def config_target(self):
+        self.target['xscrollcommand']=self.scroll1.set
+        self.target['yscrollcommand']=self.scroll2.set
+
 
 
 def _imread(e):
-    x = Itext.I = cv2.imread(Itext.Ipath,cv2.IMREAD_UNCHANGED)
+    x = Itext.I = imread(Itext.Ipath)
     mod(0,x)
     display(0)
 
@@ -26,19 +79,35 @@ def _Canny_Edge_Detection(e):
     x = get(2)
     y = cv2.Canny(x,50,100)
     #y = cv2.Laplacian(x,cv2.CV_8U)
-    #ret, y2 = cv2.threshold(img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+    #print ('before thresh',x,type(x),x.shape)
+    #ret, y = cv2.threshold(x,0,255,cv2.THRESH_BINARY|cv2.THRESH_OTSU)
+    #
+    #print 'Canny>>>',y
     mod(3, y )
     display(3)
+
 def _X1(e):
     x = get(3)
-    se = np.ones((2,2),np.uint8)
-    seflood = np.zeroes((0,0),np.uint8)
+    h,w = x.shape[:2]
+    se1 = np.ones((2,2),np.uint8)
+    seflood = np.zeros((h+2,w+2),np.uint8)
+
     se = np.array([[0,1,0],
                 [1,1,1],
                 [0,1,0]], dtype=np.uint8)
-    y = cv2.morphologyEx(x, cv2.MORPH_CLOSE, se)
+    y = cv2.morphologyEx(x, cv2.MORPH_DILATE, se1)
     #y = cv2.floodFill(x,seflood,(0,0),255)
+    #print '++++++++',type(y),y
+    #yinv = cv2.bitwise_not(y[1])
+    #yinv = ~y[1]
+    #yy = x | yinv
+    #print '++++++++',type(yinv),yinv,type(yinv)
+
+    # ----
+    # ----
+
     mod(4, y)
+    #mod(4,y)
     display(4)
 def move_(e):
     w = e.widget
@@ -48,7 +117,7 @@ def make_frame(parent,label,font_size_increment = 0):
     fs = 10
     fs += font_size_increment
     l = t.Label(text = label, font = 'tahoma %d bold'%fs, cursor = 'fleur')
-    f = t.LabelFrame(parent,bd=7, relief = 'groove',highlightthickness=7)
+    f = t.LabelFrame(parent,borderwidth=7, relief = 'groove',highlightthickness=7)
     f.XLabel = l
     f.XLabel.bind('<B1-Motion>',move_)
     f.config (labelwidget = l)
@@ -60,20 +129,31 @@ def get_dir():
 
 def get_image_names(x):
     x = os.listdir(x)
-    x = filter(lambda l:l.rpartition('.')[2] in ['png','tif','tiff','jpg','jpeg','gif'],x)
-    return x
+
+    dirs = filter(os.path.isdir,x)
+    f = filter(os.path.isfile, x)
+
+    x = filter(lambda l:l.rpartition('.')[2] in ['png','tif','tiff','jpg','jpeg','jpe','jp2','bmp','dib'],x)
+    return x,dirs
 
 def populate_list(x = False):
     if not x:
         x = os.getcwd()
     list1.Xpath = x
-    y = get_image_names(x)
+
+    y,dirs = get_image_names(x)
 
     list1.delete(0,t.END)
 
-    for j,i in enumerate(y):
-        list1.insert(j+1,i)
 
+    c = len(dirs)
+    for j,i in enumerate(dirs):
+        pass
+
+    for j,i in enumerate(y):
+        list1.insert(j,i)
+
+    #for j,i in enumerate(y):
 
 def tk_image(fname,*rest ):
     p = Image.open(fname) # pillow_image
@@ -94,7 +174,7 @@ def list_select(e):
     path = os.path.join(list1.Xpath,text)
 
     Itext.Ipath = path
-    Itext.a[0] = cv2.imread(path)
+    Itext.a[0] = imread(path)
     display(0)
 
     #print (path)
@@ -124,15 +204,7 @@ def list_leave(e):
     w=e.widget
     w.itemconfig(w.Xhover_i,background = 'white')
 
-def Box(parent,*i):
-    t.Frame(parent)
-
 ##U+2589
-
-def Appear(x,manager,**kw):
-    fun = getattr(x,manager)
-
-    fun(x,**kw)
 
 def switch_page(e):
     pass
@@ -165,26 +237,6 @@ ImageTextScroll2 = t.Scrollbar(ImageFrame,orient=t.HORIZONTAL)
 
 
 
-class gridder:
-    def __init__(self,dx,dy,offset = 50):
-        self.inc = offset
-        self.dx=dx
-        self.dy=dy
-    def getx(self,x):
-        return self.dx*x+self.inc
-    def gety(self,y):
-        return self.dy*y
-
-class im:
-    def __init__(self,canvas,text, x=0,y=0):
-        self.c = canvas
-        self.x = self.c.Gridder.getx(x)
-        self.y = self.c.Gridder.gety(y)
-        self.button(text)
-    def button(self,text):
-        self.b = t.Button(font = 'tahoma 10',text=text)
-        self.c.create_window(self.x,self.y,window = self.b)
-
 class Reel:
     def __init__(self,parent,image,length = 1):
         self.image = image
@@ -197,14 +249,118 @@ class Reel:
             b.grid(row=0,column=i,sticky='WE')
             b.bind('<Motion>',switch_page)
 
+
 image2 = tk_image('3.png',11,11)
 Container2.XIndex = []
+
+class Checkbutton(t.Button):
+    def __init__(self,parent,**kw):
+        temp = kw.pop('state1',True)
+
+        t.Button.__init__(self,parent,padx = 10,command = self.Released,**kw)
+
+        self.set( temp)
+        #self.bind('<ButtonRelease>',self.Released)
+
+    def Released (self,e = None):
+        self.toggle()
+
+    def set(self,value):
+        if value:
+            self.on()
+        else:
+            self.off()
+
+    def toggle(self,new_state = None):
+        if new_state is not None:
+            self.set(new_state)
+        else:
+            pass
+            self.set(not self.Xstate)
+
+
+    def on(self):
+        self['text'] = 'Enabled'
+        self['relief'] = 'sunken'
+        self.Xstate = True
+
+    def off(self):
+        self['text'] = 'Press to enable'
+        self['relief'] = 'raised'
+        self.Xstate = False
+
+
+
+
+class FunctionPane(t.Frame):
+
+    def __init__(self,parent,**kw):
+
+        self.name = kw.pop('name','Generic Name')
+        self.function = kw.pop('function',0)
+        #self.control = kw.pop('control',lambda l:1)
+        #self.fun = kw.pop('funtion',lambda l: 1)
+        self.all = [[]]
+        super().__init__(self,parent,**kw)
+
+        self.tab = ttk.Notebook(parent)
+
+        self.disable = Checkbutton(self,text= 'Enabled')
+
+        self.reload = ttk.Button(self,text= 'Reset')
+
+        self.position()
+
+        self.connect()
+
+    def op(self,j,i,set = False):
+        y = [j,j]
+        x = [i,i]
+
+        if j == None:
+            y[0] = 0
+        else:
+            y[1]+= 1
+
+        if i == None:
+            x[0] = 0
+        else:
+            x[1]+= 1
+
+        if set is False:
+            return self.all[y[0]:y[1]][x[0]:x[1]]
+        else:
+            self.all[y[0]:y[1]][x[0]:x[1]] = set
+
+    def position(self):
+
+        self.tab.pack(side='top',fill='both',expand = 1)
+
+        self.reload.grid(row = 0,column=0,sticky = 'E')
+
+        self.disable.grid(row = 0,column=1,sticky = 'E')
+
+        self.tab.add(self,text=name)
+
+    def add(self,j,i,t, conn = False):
+        #j-=1
+        self.op(j,i,set=t)
+        if conn:
+            self.op(j,i).connect(conn[0],conn[1])
+        #self.f.bind('<Visibility>',globals()['_'+name])
+        #self.reload.bind('<ButtonRelease>',globals()['_'+name])
+
+    def tab(self,**kw):
+        if kw:
+            self.tab.config(**kw)
+        return self.tab
+
 class Pane:
     def __init__(self,parent,name):
         self.tab = ttk.Notebook(parent)
         #self.code = t.Frame(self.tab)
         self.f = t.Frame(parent)
-        self.disable = ttk.Button(self.f,text= 'Disable')
+        self.disable = Checkbutton(self.f,text= 'Enabled')
         self.reload = ttk.Button(self.f,text= 'Reload')
         #self.l = t.Label(self.f,text = name, font = 'tahoma 11')
         #self.l.grid(row = 0,column =0 , sticky='W')
@@ -217,6 +373,11 @@ class Pane:
         self.reload.bind('<ButtonRelease>',globals()['_'+name])
         #self.tab.add(self.code,text='Code')
 
+'''
+class Run:
+    def __init__(self,*i):
+        self.i = i
+'''
 Dict = ['imread','Noise_Removal','Channel_Extraction','Canny_Edge_Detection','X1']
 DictValues=[]
 
@@ -228,7 +389,7 @@ Itext.a = []
 Itext.b = []
 
 Itext.Ipath = os.getcwd()+os.sep+'test1.jpg'
-Itext.I = cv2.imread(Itext.Ipath)
+Itext.I = imread(Itext.Ipath)
 Itext.M = Itext.I
 #print '->>>',Itext.I
 
@@ -263,7 +424,7 @@ def display(pos = -1):
 
 def scale1_fun(v):
     v = int(v)
-    L ={0:'Blue',1:'Green',2:'Red'}
+    L ={0:'Red',1:'Green',2:'Blue'}
     label1['text']= L[v]
     prev = get(1)
     mod(2,prev[:,:,v])
@@ -291,6 +452,7 @@ def spin_fun(v = False, v3=1,v2 = [1]):
 
 def spin_fun2(v):
     spin_fun(radio1_var.get(),int(v))
+
 
 label1 = t.Label(DictValues[2].f,text=0)
 scale1 = t.Scale(DictValues[2].f, from_ = 0, to=2,command=scale1_fun, orient=t.HORIZONTAL,showvalue=0)
@@ -363,5 +525,7 @@ list1.bind('<<ListboxSelect>>',list_select)
 list1.bind('<Motion>',list_hover)
 list1.bind('<Leave>',list_leave)
 #print top.place_slaves()
+#S(ImshowText).grid(row=0,column=1,second=1).grid(row=1,column=1)
+
 top.geometry('800x800+{}+{}'.format(1920/2,1080/2))
 top.mainloop()
