@@ -23,7 +23,7 @@ def imread(x, mode=cv2.IMREAD_UNCHANGED):
     try:
         i = cv2.cvtColor(i,cv2.COLOR_BGR2RGB)
     except Exception as e:
-        print ('[def imread] ({})'.format(e))
+        print ('[Exception in imread({},{})] ({})'.format(x,mode,e))
 
     return i
 
@@ -289,71 +289,91 @@ class Checkbutton(t.Button):
         self['relief'] = 'raised'
         self.Xstate = False
 
+class Control:
+    def __init__(self,*i):
+        self.all = [list(i)]
 
+    def add_to_group(self,index,*item,**kw):
 
+        bind = kw.pop('bind',None)
+        bind2 = kw.pop('bind2',None) # bind already existing items
+
+        self.all[index].extend(item)
+
+        if item and bind:
+            self.bind(bind[0],bind[1],  xrange(len(self.all[j])) )
+
+    def bind(event_type,function,*i):
+
+        for j in i:
+            rtype = type(j)
+            if  rtype == int:
+                self.all[j].bind(event_type,function)
+            elif rtype == str:
+                vars(self)[j].bind(event_type,function)
+##        if type(i[0]) == int:
+##            target = map(lambda x: self.all[x], i)
+##        else:
+##            target = vars(self) ; target.remove('all')
+##
+##            target = filter(lambda x: x in i, target)
+##
+##            map( lambda x: getattr(self,x).bind(event_type,function))
+
+    def __repr__(self):
+
+        s =  vars(self)
+
+        return '''Control
+{}
+end'''.format(s)
 
 class FunctionPane(t.Frame):
 
-    def __init__(self,parent,**kw):
+    def __init__(self,**kw):
 
-        self.name = kw.pop('name','Generic Name')
-        self.function = kw.pop('function',0)
-        #self.control = kw.pop('control',lambda l:1)
-        #self.fun = kw.pop('funtion',lambda l: 1)
-        self.all = [[]]
-        super().__init__(self,parent,**kw)
+        self._parent = kw.pop('parent')
 
-        self.tab = ttk.Notebook(parent)
+        self._Name = kw.pop('name','Generic Tab')
 
-        self.disable = Checkbutton(self,text= 'Enabled')
+        self._tab= ttk.Notebook(self._parent,**kw)
 
-        self.reload = ttk.Button(self,text= 'Reset')
+        t.Frame.__init__(self,self._tab)
+
+        #self['master'] = self.tab
+
+        #self['text']= self.name
+
+        #self.frame = t.Frame(self)
+
+        self._disable = Checkbutton(self,text='Enabled')
+
+        self._reload = ttk.Button(self,text= 'Reset')
+
+        self.control = Control(self._disable,self._reload)
 
         self.position()
 
-        self.connect()
+    def put(y,x, index,*item):
 
-    def op(self,j,i,set = False):
-        y = [j,j]
-        x = [i,i]
+        self._control.add_to_group(index,item, bind = None)
 
-        if j == None:
-            y[0] = 0
-        else:
-            y[1]+= 1
-
-        if i == None:
-            x[0] = 0
-        else:
-            x[1]+= 1
-
-        if set is False:
-            return self.all[y[0]:y[1]][x[0]:x[1]]
-        else:
-            self.all[y[0]:y[1]][x[0]:x[1]] = set
+        self.grid(row = y, column = x )
 
     def position(self):
 
-        self.tab.pack(side='top',fill='both',expand = 1)
+        self._tab.pack(side='left',fill='both',expand = 1)
 
-        self.reload.grid(row = 0,column=0,sticky = 'E')
+        self._tab.add(self,text = self._Name)
 
-        self.disable.grid(row = 0,column=1,sticky = 'E')
+        self._reload.grid(row = 0,column=0,sticky = t.E)
 
-        self.tab.add(self,text=name)
+        self._disable.grid(row = 0,column=1,sticky = t.E)
 
-    def add(self,j,i,t, conn = False):
-        #j-=1
-        self.op(j,i,set=t)
-        if conn:
-            self.op(j,i).connect(conn[0],conn[1])
+
         #self.f.bind('<Visibility>',globals()['_'+name])
         #self.reload.bind('<ButtonRelease>',globals()['_'+name])
 
-    def tab(self,**kw):
-        if kw:
-            self.tab.config(**kw)
-        return self.tab
 
 class Pane:
     def __init__(self,parent,name):
@@ -480,7 +500,15 @@ spin13.grid(row=3,column=1,columnspan = 1,sticky=t.W)
 #im(Canvas,'channel extraction',x=1,y=2)
 
 # Configs1
+## --
 
+tes = FunctionPane(parent = top)
+#tes.put(1,0,t.Button(text = 'Hi'))
+#tes2 = FunctionPane(parent = top)
+#tes = t.Frame()
+
+
+## --
 Container2.pack(side=t.LEFT,fill='both',expand=1)
 Container1.pack(side=t.LEFT,fill='both',expand=1)
 ImageText.place(x=0,y=0, relwidth=.90,relheight=.95)
