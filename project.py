@@ -354,11 +354,14 @@ class FunctionPane(t.Frame):
 
         self.position()
 
-    def put(self,y,x, index,*item):
+    def put(self,index,*item):
 
-        self.control.add_to_group(index,item, bind = None)
+        items = [ j[1:None] for j in item]
+
+        self.control.add_to_group(index,items, bind = None)
 
         for j in item:
+            y,x,j = j
             j.grid(row = y, column = x,sticky = t.W )
 
     def position(self):
@@ -505,7 +508,7 @@ spin13.grid(row=3,column=1,columnspan = 1,sticky=t.W)
 
 tes = FunctionPane(parent = top)
 
-tes.put(1,0,1,t.Button(tes,text = 'Hi'))
+tes.put(1, (1,0,t.Button(tes,text = 'Hi')),(1,1,t.Button(tes,text = 'Hi2')) )
 #tes2 = FunctionPane(parent = top)
 #tes = t.Frame()
 
