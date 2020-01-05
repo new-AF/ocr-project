@@ -302,9 +302,9 @@ class Control:
         self.all[index:index+1] = item
 
         if item and bind:
-            self.bind(bind[0],bind[1],  xrange(len(self.all[j])) )
+            self.bind(bind[0],bind[1],  xrange(len(self.all[index])) )
 
-    def bind(event_type,function,*i):
+    def bind(self,event_type,function,*i):
 
         for j in i:
             rtype = type(j)
@@ -354,11 +354,16 @@ class Control:
 
     def __repr__(self):
 
-        s =  vars(self)
+        s=['Control']
+        l = 0
+        for j,i in vars(self).iteritems():
 
-        return '''Control
-{}
-end'''.format(s)
+            L = '\t' + str(i).replace('[','[\n\t\t').replace(', [','\n\t\t, [').replace(']',']\n')
+
+            s+= [j,L]
+        s+=['end']
+
+        return '\n'.join(s)
 
 class FunctionPane(t.Frame):
 
@@ -388,14 +393,15 @@ class FunctionPane(t.Frame):
 
     def put(self,index,*item):
 
-        items = [ j[1:None] for j in item]
+        Widgets = [ j[2] for j in item]
 
-        self.control.add_to_group(index,items, bind = None)
+        self.control.add_to_group(index,Widgets, bind = None)
 
         for j in item:
             y,x,j = j
-            j.grid(row = y, column = x,sticky = t.W )
+            j.grid(row = y, column = x,sticky = t.W+t.S )
 
+        print self.control
     def position(self):
 
         self.tab.pack(side='left',fill='both',expand = 1)
@@ -539,9 +545,9 @@ spin13.grid(row=3,column=1,columnspan = 1,sticky=t.W)
 
 ## --
 
-tes = FunctionPane(parent = top)
+te = FunctionPane(parent = top,name='( imread ) Read an Image')
 
-tes.put(1, (1,0,t.Button(tes,text = 'Hi')),(1,1,t.Button(tes,text = 'Hi2')) )
+te.put(1, (1,0,t.Button(te,text = 'Hi')),(1,1,t.Button(te,text = 'Hi2')) )
 #tes2 = FunctionPane(parent = top)
 #tes = t.Frame()
 
