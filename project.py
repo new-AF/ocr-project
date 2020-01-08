@@ -249,7 +249,7 @@ class Run:
 
 # ---
 Container3 = t.Frame(top)
-Container3.pack(side=t.LEFT,fill='both',expand=1)
+Container3.pack(side=t.LEFT,fill='both',expand=0, padx = 20)
 
 pane1 = FunctionPane(parent = Container3,name='imread /Read an Image')
 def xread(e):
@@ -410,7 +410,8 @@ def xthresh_router(e,after = [0]):
     w = e.widget.control_parent
     v = w.var1.get()
     v2 = w.var2[v].get()
-    v2 = int(v2)
+    if type(v2) == int:
+        v2 = int(v2)
     globals()['xthresh%d'%v](w,v2)
 
 
@@ -424,60 +425,6 @@ pane3.control.bind2('<B1-Motion>',xthresh_router,3)
 #pane3.control[2]
 # ---
 
-
-
-
-def _imread(e):
-    x = Itext.I = imread(Itext.Ipath)
-    mod(0,x)
-    display(0)
-
-def _Channel_Extraction(e):
-    pass
-
-def _Noise_Removal(e):
-    pass
-
-def _Canny_Edge_Detection(e):
-    x = get(2)
-    y = cv2.Canny(x,50,100)
-    #y = cv2.Laplacian(x,cv2.CV_8U)
-    #print ('before thresh',x,type(x),x.shape)
-    #ret, y = cv2.threshold(x,0,255,cv2.THRESH_BINARY|cv2.THRESH_OTSU)
-    #
-    #print 'Canny>>>',y
-    mod(3, y )
-    display(3)
-
-def _X1(e):
-    x = get(3)
-    h,w = x.shape[:2]
-    se1 = np.ones((2,2),np.uint8)
-    seflood = np.zeros((h+2,w+2),np.uint8)
-
-    se = np.array([[0,1,0],
-                [1,1,1],
-                [0,1,0]], dtype=np.uint8)
-    y = cv2.morphologyEx(x, cv2.MORPH_DILATE, se1)
-    #y = cv2.floodFill(x,seflood,(0,0),255)
-    #print '++++++++',type(y),y
-    #yinv = cv2.bitwise_not(y[1])
-    #yinv = ~y[1]
-    #yy = x | yinv
-    #print '++++++++',type(yinv),yinv,type(yinv)
-
-    # ----
-    # ----
-
-    mod(4, y)
-    #mod(4,y)
-    display(4)
-
-class Lscale(t.Scale):
-    def __init__(self,parent,**kw):
-        heading = kw.pop('heading','Heading')
-        self.lf = make_frame(self,heading)
-        t.Scale.__init__(self,self.lf,**kw)
 
 def move_(e):
     w = e.widget
@@ -585,33 +532,23 @@ def switch_page(e):
 
 ## Variables
 Container1 = t.Frame(top)
-Container2 = t.Frame(top)
+
 image = tk_image('test1.jpg')
 ImageFrame = make_frame(Container1,'Image')
 ImageText = t.Text(ImageFrame)
+
 CurrentFrame = make_frame(top,'Images in Current Path',-2)
+
 ScrollFrame = t.Frame(CurrentFrame,relief='groove')
 VirtualImage = ImageText.image_create(t.END, image=image)
 
-Canvas = t.Canvas(top,highlightthickness=7)
 ImshowFrame = make_frame(Container1,'Pipeline')
 ImshowFrame.tab = ttk.Notebook(ImshowFrame)
 ImshowText = t.Text(ImshowFrame.tab)
 
-
-
 ImageTextScroll1 = t.Scrollbar(ImageFrame)
 ImageTextScroll2 = t.Scrollbar(ImageFrame,orient=t.HORIZONTAL)
 
-
-
-
-image2 = tk_image('3.png',11,11)
-Container2.XIndex = []
-
-
-Dict = ['imread','Noise_Removal','Channel_Extraction','Canny_Edge_Detection','X1']
-DictValues=[]
 
 Itext = t.Text(ImshowFrame.tab)
 ImshowFrame.tab.add(Itext,text='Processed Image')
@@ -622,25 +559,6 @@ Itext.Ipath = os.getcwd()+os.sep+'test1.jpg'
 Itext.I = imread(Itext.Ipath)
 Itext.M = Itext.I
 
-for i in Dict:
-    j=Pane(Container2,i)
-    DictValues += [j]
-    Itext.a += [Itext.I]
-    Itext.b += [Itext.I]
-
-def get(pos):
-    return Itext.a[pos]
-
-def getb(pos):
-    return Itext.b[pos]
-
-def mod(pos,x=None,disabled = 0):
-    if disabled:
-        Itext.a[pos] = Itext.b[pos]
-    if x is not None:
-        Itext.a[pos] = x
-    #for i in range(pos):
-    #    display(i)
 
 def setItext(x):
     j = x
@@ -650,78 +568,6 @@ def setItext(x):
         pass
     Itext.Itag=Itext.image_create(t.END,image = j)
 
-def display(pos = -1):
-    try:
-        Itext.Im = ImageTk.PhotoImage(Image.fromarray(Itext.a[pos]))
-        Itext.delete(Itext.Itag)
-    except:
-        pass
-    #print Itext.I
-    Itext.Itag = Itext.image_create(t.END,image = Itext.Im)
-
-def scale1_fun(v):
-    v = int(v)
-    L ={0:'Red',1:'Green',2:'Blue'}
-    label1['text']= L[v]
-    prev = get(1)
-    mod(2,prev[:,:,v])
-    display(2)
-
-
-def spin_fun(v = False, v3=1,v2 = [1]):
-    if v is False:
-        v = int(radio1_var.get())
-
-    if v3%2==0:
-        v3+=1
-
-    v2[0] = v3
-    #print '->>>',v,v2
-
-    l1 = lambda x,s : cv2.blur(x,(s,s))
-    l2 = lambda x,s : cv2.GaussianBlur(x,(s,s),0)
-    l3 = lambda x,s : cv2.medianBlur(x,s)
-    x = [l1,l2,l3][v]
-    x = x(get(0),v2[0])
-    #print x
-    mod(1,x)
-    display(1)
-
-def spin_fun2(v):
-    spin_fun(radio1_var.get(),int(v))
-
-
-label1 = t.Label(DictValues[2].f,text=0)
-scale1 = t.Scale(DictValues[2].f, from_ = 0, to=2,command=scale1_fun, orient=t.HORIZONTAL,showvalue=0)
-label1.grid(row=1,column=0,columnspan = 2)
-scale1.grid(row=2,column=0,columnspan = 2)
-
-radio1_var = t.IntVar()
-radio11 = t.Radiobutton(DictValues[1].f,text = 'Average',variable=radio1_var,value=0,command = spin_fun)
-radio12 = t.Radiobutton(DictValues[1].f,text = 'Gaussian',variable=radio1_var,value=1,command = spin_fun)
-radio13 = t.Radiobutton(DictValues[1].f,text = 'Median',variable=radio1_var,value=2,command = spin_fun)
-spin11 = t.Scale(DictValues[1].f,from_=1,to = 10,font = 'tahoma 9',orient=t.HORIZONTAL,command = spin_fun2)
-spin12 = t.Scale(DictValues[1].f,from_=1,to = 10,font = 'tahoma 9',orient=t.HORIZONTAL,command = spin_fun2)
-spin13 = t.Scale(DictValues[1].f,from_=1,to = 10,font = 'tahoma 9',orient=t.HORIZONTAL,command = spin_fun2)
-radio11.grid(row=1,column=0,columnspan = 1,sticky=t.W)
-radio12.grid(row=2,column=0,columnspan = 1,sticky=t.W)
-radio13.grid(row=3,column=0,columnspan = 1,sticky=t.W)
-spin11.grid(row=1,column=1,columnspan = 1,sticky=t.W)
-spin12.grid(row=2,column=1,columnspan = 1,sticky=t.W)
-spin13.grid(row=3,column=1,columnspan = 1,sticky=t.W)
-#print Container2.XIndex
-
-# Configs1
-
-## --
-
-#tes2 = FunctionPane(parent = top)
-#tes = t.Frame()
-
-
-## --
-
-Container2.pack(side=t.LEFT,fill='both',expand=1)
 Container1.pack(side=t.LEFT,fill='both',expand=1)
 ImageText.place(x=0,y=0, relwidth=.90,relheight=.95)
 CurrentFrame.pack(side=t.LEFT,fill=t.X)
@@ -758,7 +604,8 @@ b1.pack(side=t.TOP,anchor= t.E, pady = 5)
 ScrollFrame.pack(side = t.BOTTOM)
 list_scroll1.config(command = list1.yview)
 list_scroll2.config(command = list1.xview)
-Canvas.focus()
+
+
 populate_list()
 list1.bind('<<ListboxSelect>>',list_select)
 list1.bind('<Motion>',list_hover)
@@ -767,4 +614,10 @@ list1.bind('<Leave>',list_leave)
 #S(ImshowText).grid(row=0,column=1,second=1).grid(row=1,column=1)
 
 top.geometry('800x800+{}+{}'.format(1920/2,1080/2))
+
+topmenu = t.Menu(top)
+smenu = t.Menu(topmenu)
+smenu.add_checkbutton()
+topmenu.add_cascade(label = 'Setting',menu = smenu)
+
 top.mainloop()
